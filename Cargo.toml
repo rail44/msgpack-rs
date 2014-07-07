@@ -3,5 +3,5 @@ name = "msgpack"
 version = "0.0.1"
 authors = ["Satoshi Amemiya"]
 
-[[bin]]
+[[lib]]
 name = "msgpack"

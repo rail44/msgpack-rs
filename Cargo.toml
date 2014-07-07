@@ -1,0 +1,7 @@
+[package]
+name = "msgpack"
+version = "0.0.1"
+authors = ["Satoshi Amemiya"]
+
+[[bin]]
+name = "msgpack"

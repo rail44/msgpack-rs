@@ -10,6 +10,7 @@ use serialize::{
   Encodable,
   Encoder
 };
+use encoder::encode;
 pub mod parser;
 pub mod decoder;
 pub mod encoder;
@@ -40,6 +41,12 @@ impl<E: serialize::Encoder<S>, S> Encodable<E, S> for MsgPack {
       Float(ref v) => v.encode(e),
       Extended(ref v) => v.encode(e),
     }
+  }
+}
+
+impl IntoBytes for MsgPack {
+  fn into_bytes(&self) -> Vec<u8> {
+    encode(&self)
   }
 }
 

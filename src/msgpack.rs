@@ -1,5 +1,6 @@
-#![feature(phase)]
-#![feature(macro_rules)]
+#![feature(phase, macro_rules)]
+#![crate_id = "msgpack#0.0.1"]
+#![crate_type = "lib"]
 
 #[phase(plugin, link)]
 extern crate log;

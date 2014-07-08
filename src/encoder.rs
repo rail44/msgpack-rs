@@ -282,7 +282,7 @@ mod test {
   }
 
   #[test]
-  fn test_decode_for_struct() {
+  fn test_encode_for_struct() {
     let obj = Inner { a: (), b: 2, c: vec!["abc".to_string(), "xyz".to_string()] };
     let b = b"\x83\xA1a\xC0\xA1b\xcc\x02\xA1c\x92\xA3abc\xA3xyz";
     assert_eq!(

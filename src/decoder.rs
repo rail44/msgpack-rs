@@ -49,7 +49,7 @@ macro_rules! expect(
 )
 
 #[deriving(Clone, PartialEq, Show)]
-pub enum DecoderError {
+pub enum DecodeError {
   NotSupportedError,
   ExpectedError(String, String),
   MissingFieldError(String),
@@ -60,7 +60,7 @@ pub struct Decoder {
   stack: Vec<MsgPack>,
 }
 
-type DecodeResult<T> = Result<T, DecoderError>;
+type DecodeResult<T> = Result<T, DecodeError>;
 
 impl Decoder {
   pub fn new(msgpack: MsgPack) -> Decoder {
@@ -73,7 +73,7 @@ impl Decoder {
 }
 
 
-pub fn decode<T: Decodable<Decoder, DecoderError>>(s: &[u8]) -> Result<T, DecoderError> {
+pub fn decode<T: Decodable<Decoder, DecodeError>>(s: &[u8]) -> Result<T, DecodeError> {
   let msgpack = match from_bytes(s) {
     Ok(x) => x,
     Err(e) => fail!("{}",e)
@@ -83,7 +83,7 @@ pub fn decode<T: Decodable<Decoder, DecoderError>>(s: &[u8]) -> Result<T, Decode
   Decodable::decode(&mut decoder)
 }
 
-impl serialize::Decoder<DecoderError> for Decoder {
+impl serialize::Decoder<DecodeError> for Decoder {
   fn read_nil(&mut self) -> DecodeResult<()> { Ok(expect!(self.pop(), Nil)) }
   
   fn read_u64(&mut self) -> DecodeResult<u64> { Ok(expect!(self.pop(), Integer, Uint64)) }

@@ -45,7 +45,7 @@ impl<E: serialize::Encoder<S>, S> Encodable<E, S> for MsgPack {
 }
 
 impl IntoBytes for MsgPack {
-  fn into_bytes(&self) -> Vec<u8> {
+  fn into_bytes(self) -> Vec<u8> {
     encode(&self)
   }
 }

@@ -7,14 +7,25 @@ extern crate log;
 
 extern crate serialize;
 use std::collections::HashMap;
-use serialize::{
-  Encodable,
-  Encoder
+use serialize::Encodable;
+use std::io::{
+  IoResult,
+  BufReader
 };
-use encoder::encode;
-pub mod parser;
-pub mod decoder;
-pub mod encoder;
+
+pub use parser::Parser;
+pub use encoder::{
+  encode,
+  Encoder,
+};
+pub use decoder::{
+  decode,
+  Decoder,
+  DecodeError
+};
+mod parser;
+mod decoder;
+mod encoder;
 
 #[deriving(Clone, PartialEq, Show)]
 pub enum MsgPack {
@@ -48,6 +59,14 @@ impl<E: serialize::Encoder<S>, S> Encodable<E, S> for MsgPack {
 impl IntoBytes for MsgPack {
   fn into_bytes(self) -> Vec<u8> {
     encode(&self)
+  }
+}
+
+impl MsgPack {
+  pub fn from_bytes(b: &[u8]) -> IoResult<MsgPack> {
+    let reader = BufReader::new(b);
+    let mut parser = Parser::new(reader);
+    parser.parse()
   }
 }
 

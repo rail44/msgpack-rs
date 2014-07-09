@@ -1,6 +1,5 @@
 use serialize;
 use serialize::Decodable;
-use parser::from_bytes;
 
 use {
   MsgPack,
@@ -74,7 +73,7 @@ impl Decoder {
 
 
 pub fn decode<T: Decodable<Decoder, DecodeError>>(s: &[u8]) -> Result<T, DecodeError> {
-  let msgpack = match from_bytes(s) {
+  let msgpack = match MsgPack::from_bytes(s) {
     Ok(x) => x,
     Err(e) => fail!("{}",e)
   };

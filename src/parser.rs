@@ -1,7 +1,6 @@
 use std::io::IoResult;
 use std::collections::HashMap;
 use std::iter;
-use std::io::BufReader;
 
 use {
   MsgPack,
@@ -26,13 +25,6 @@ use {
   Extended
 };
 
-pub fn from_bytes(b: &[u8]) -> IoResult<MsgPack> {
-  let reader = BufReader::new(b);
-  let mut parser = Parser::new(reader);
-  parser.parse()
-}
-
-// Parser
 pub struct Parser<T> {
   rdr: T,
 }

@@ -81,81 +81,85 @@ macro_rules! map_type_byte(
 )
 
 macro_rules! write_data(
-  (Uint64, $v: expr) => (self.writer.write_be_u64($v));
-  (Uint32, $v: expr) => (self.writer.write_be_u32($v));
-  (Uint16, $v: expr) => (self.writer.write_be_u16($v));
-  (Uint8, $v: expr) => (self.writer.write_u8($v));
+  ($slf: expr, Uint64, $v: expr) => ($slf.writer.write_be_u64($v));
+  ($slf: expr, Uint32, $v: expr) => ($slf.writer.write_be_u32($v));
+  ($slf: expr, Uint16, $v: expr) => ($slf.writer.write_be_u16($v));
+  ($slf: expr, Uint8, $v: expr) => ($slf.writer.write_u8($v));
 
-  (Int64, $v: expr) => (self.writer.write_be_i64($v));
-  (Int32, $v: expr) => (self.writer.write_be_i32($v));
-  (Int16, $v: expr) => (self.writer.write_be_i16($v));
-  (Int8, $v: expr) => (self.writer.write_i8($v));
+  ($slf: expr, Int64, $v: expr) => ($slf.writer.write_be_i64($v));
+  ($slf: expr, Int32, $v: expr) => ($slf.writer.write_be_i32($v));
+  ($slf: expr, Int16, $v: expr) => ($slf.writer.write_be_i16($v));
+  ($slf: expr, Int8, $v: expr) => ($slf.writer.write_i8($v));
 
-  (Float64, $v: expr) => (self.writer.write_be_f64($v));
-  (Float32, $v: expr) => (self.writer.write_be_f32($v));
+  ($slf: expr, Float64, $v: expr) => ($slf.writer.write_be_f64($v));
+  ($slf: expr, Float32, $v: expr) => ($slf.writer.write_be_f32($v));
 
-  (String, $v: expr) => (self.writer.write_str($v));
-  (FixString, $v: expr) => (write_data!(String, $v));
-  (String8, $v: expr) => (write_data!(String, $v));
-  (String16, $v: expr) => (write_data!(String, $v));
-  (String32, $v: expr) => (write_data!(String, $v));
+  ($slf: expr, String, $v: expr) => ($slf.writer.write_str($v));
+  ($slf: expr, FixString, $v: expr) => (write_data!($slf, String, $v));
+  ($slf: expr, String8, $v: expr) => (write_data!($slf, String, $v));
+  ($slf: expr, String16, $v: expr) => (write_data!($slf, String, $v));
+  ($slf: expr, String32, $v: expr) => (write_data!($slf, String, $v));
 
-  (Container, $f: expr) => ($f(self));
-  (FixMap, $f: expr) => (write_data!(Container, $f));
-  (Map16, $f: expr) => (write_data!(Container, $f));
-  (Map32, $f: expr) => (write_data!(Container, $f));
-  (FixArray, $f: expr) => (write_data!(Container, $f));
-  (Array16, $f: expr) => (write_data!(Container, $f));
-  (Array32, $f: expr) => (write_data!(Container, $f));
+  ($slf: expr, Container, $f: expr) => ($f($slf));
+  ($slf: expr, FixMap, $f: expr) => (write_data!($slf, Container, $f));
+  ($slf: expr, Map16, $f: expr) => (write_data!($slf, Container, $f));
+  ($slf: expr, Map32, $f: expr) => (write_data!($slf, Container, $f));
+  ($slf: expr, FixArray, $f: expr) => (write_data!($slf, Container, $f));
+  ($slf: expr, Array16, $f: expr) => (write_data!($slf, Container, $f));
+  ($slf: expr, Array32, $f: expr) => (write_data!($slf, Container, $f));
 )
 
 macro_rules! write_value(
-  ($t: ident) => ( self.writer.write_u8(map_type_byte!($t) as u8) );
-  ($t: ident, $v: expr) => ({
-    try!(self.writer.write_u8(map_type_byte!($t) as u8));
-    write_data!($t, $v)
+  // for static typos (e.g. Nil, True)
+  ($slf: expr, $t: ident) => ( $slf.writer.write_u8(map_type_byte!($t) as u8) );
+
+  ($slf: expr, $t: ident, $v: expr) => ({
+    try!($slf.writer.write_u8(map_type_byte!($t) as u8));
+    write_data!($slf, $t, $v)
   });
-  ($t: ident, $byte: expr, $v: expr) => ({
-    try!(self.writer.write_u8(map_type_byte!($t, $byte) as u8));
-    write_data!($t, $v)
+
+  // for fix* types
+  ($slf: expr, $t: ident, $byte: expr, $v: expr) => ({
+    try!($slf.writer.write_u8(map_type_byte!($t, $byte) as u8));
+    write_data!($slf, $t, $v)
   });
 )
 
 impl<'a> serialize::Encoder<IoError> for Encoder<'a> {
-  fn emit_nil(&mut self) -> EncodeResult { write_value!(Nil) }
+  fn emit_nil(&mut self) -> EncodeResult { write_value!(self, Nil) }
 
   // FIXME: Choose type have minimum sizes.
   fn emit_uint(&mut self, v: uint) -> EncodeResult { self.emit_u64(v as u64) }
-  fn emit_u64(&mut self, v: u64) -> EncodeResult { write_value!(Uint64, v) }
-  fn emit_u32(&mut self, v: u32) -> EncodeResult { write_value!(Uint32, v) }
-  fn emit_u16(&mut self, v: u16) -> EncodeResult { write_value!(Uint16, v) }
-  fn emit_u8(&mut self, v: u8) -> EncodeResult { write_value!(Uint8, v) }
+  fn emit_u64(&mut self, v: u64) -> EncodeResult { write_value!(self, Uint64, v) }
+  fn emit_u32(&mut self, v: u32) -> EncodeResult { write_value!(self, Uint32, v) }
+  fn emit_u16(&mut self, v: u16) -> EncodeResult { write_value!(self, Uint16, v) }
+  fn emit_u8(&mut self, v: u8) -> EncodeResult { write_value!(self, Uint8, v) }
 
   fn emit_int(&mut self, v: int) -> EncodeResult { self.emit_i64(v as i64) }
-  fn emit_i64(&mut self, v: i64) -> EncodeResult { write_value!(Int64, v) }
-  fn emit_i32(&mut self, v: i32) -> EncodeResult { write_value!(Int32, v) }
-  fn emit_i16(&mut self, v: i16) -> EncodeResult { write_value!(Int16, v) }
-  fn emit_i8(&mut self, v: i8) -> EncodeResult { write_value!(Int8, v) }
+  fn emit_i64(&mut self, v: i64) -> EncodeResult { write_value!(self, Int64, v) }
+  fn emit_i32(&mut self, v: i32) -> EncodeResult { write_value!(self, Int32, v) }
+  fn emit_i16(&mut self, v: i16) -> EncodeResult { write_value!(self, Int16, v) }
+  fn emit_i8(&mut self, v: i8) -> EncodeResult { write_value!(self, Int8, v) }
 
   fn emit_bool(&mut self, v: bool) -> EncodeResult {
     if v {
-      write_value!(True)
+      write_value!(self, True)
     } else {
-      write_value!(False)
+      write_value!(self, False)
     }
   }
 
-  fn emit_f64(&mut self, v: f64) -> EncodeResult { write_value!(Float64, v) }
-  fn emit_f32(&mut self, v: f32) -> EncodeResult { write_value!(Float32, v) }
+  fn emit_f64(&mut self, v: f64) -> EncodeResult { write_value!(self, Float64, v) }
+  fn emit_f32(&mut self, v: f32) -> EncodeResult { write_value!(self, Float32, v) }
 
   fn emit_char(&mut self, _: char) -> EncodeResult { Err(IoError::last_error()) }
 
   fn emit_str(&mut self, v: &str) -> EncodeResult {
     match v.len() {
-      0 .. 31 => write_value!(FixString, v.len(), v),
-      32 .. 255 => write_value!(String8, v),
-      256 .. 65535 => write_value!(String16, v),
-      65536 .. 4294967295 => write_value!(String32, v),
+      0 .. 31 => write_value!(self, FixString, v.len(), v),
+      32 .. 255 => write_value!(self, String8, v),
+      256 .. 65535 => write_value!(self, String16, v),
+      65536 .. 4294967295 => write_value!(self, String32, v),
       _ => Err(IoError::last_error())
     }
   }
@@ -168,9 +172,9 @@ impl<'a> serialize::Encoder<IoError> for Encoder<'a> {
 
   fn emit_struct(&mut self, _: &str, len: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult {
     match len {
-      0 .. 15 => write_value!(FixMap, len, f),
-      16 .. 65535 => write_value!(Map16, f),
-      65536 .. 4294967295 => write_value!(Map32, f),
+      0 .. 15 => write_value!(self, FixMap, len, f),
+      16 .. 65535 => write_value!(self, Map16, f),
+      65536 .. 4294967295 => write_value!(self, Map32, f),
       _ => Err(IoError::last_error())
     }
   }
@@ -190,9 +194,9 @@ impl<'a> serialize::Encoder<IoError> for Encoder<'a> {
 
   fn emit_seq(&mut self, len: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult {
     match len {
-      0 .. 15 => write_value!(FixArray, len, f),
-      16 .. 65535 => write_value!(Array16, f),
-      65536 .. 4294967295 => write_value!(Array32, f),
+      0 .. 15 => write_value!(self, FixArray, len, f),
+      16 .. 65535 => write_value!(self, Array16, f),
+      65536 .. 4294967295 => write_value!(self, Array32, f),
       _ => Err(IoError::last_error())
     }
   }
@@ -200,9 +204,9 @@ impl<'a> serialize::Encoder<IoError> for Encoder<'a> {
 
   fn emit_map(&mut self, len: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult {
     match len {
-      0 .. 15 => write_value!(FixMap, len, f),
-      16 .. 65535 => write_value!(Map16, f),
-      65536 .. 4294967295 => write_value!(Map32, f),
+      0 .. 15 => write_value!(self, FixMap, len, f),
+      16 .. 65535 => write_value!(self, Map16, f),
+      65536 .. 4294967295 => write_value!(self, Map32, f),
       _ => Err(IoError::last_error())
     }
   }

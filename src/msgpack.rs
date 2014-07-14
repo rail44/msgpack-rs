@@ -18,6 +18,7 @@ pub use parser::{
 pub use encoder::{
   encode,
   Encoder,
+  ToMsgPack
 };
 pub use decoder::{
   decode,

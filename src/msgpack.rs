@@ -5,7 +5,10 @@ extern crate log;
 
 extern crate serialize;
 use std::collections::HashMap;
-use serialize::Encodable;
+use serialize::{
+  Decodable,
+  Encodable
+};
 use std::io::{
   IoResult,
   BufReader
@@ -69,6 +72,11 @@ impl MsgPack {
     let reader = BufReader::new(b);
     let mut parser = Parser::new(reader);
     parser.parse()
+  }
+
+  pub fn decode<T: Decodable<Decoder, DecodeError>>(self) -> Result<T, DecodeError> {
+    let mut decoder = Decoder::new(self);
+    Decodable::decode(&mut decoder)
   }
 }
 

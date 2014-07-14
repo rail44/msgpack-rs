@@ -11,7 +11,10 @@ use std::io::{
   BufReader
 };
 
-pub use parser::Parser;
+pub use parser::{
+  Parser,
+  StreamParser
+};
 pub use encoder::{
   encode,
   Encoder,

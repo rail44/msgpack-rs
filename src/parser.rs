@@ -217,3 +217,21 @@ impl<T: Reader> Parser<T> {
   }
 }
 
+pub struct StreamParser<T> {
+  parser: Parser<T>
+}
+
+impl<T: Reader> Iterator<MsgPack> for StreamParser<T> {
+  fn next(&mut self) -> Option<MsgPack> {
+    match self.parser.parse() {
+      Ok(v) => Some(v),
+      Err(_) => None
+    }
+  }
+}
+
+impl<T: Reader> StreamParser<T> {
+  pub fn new(rdr: T) -> StreamParser<T> {
+    StreamParser { parser: Parser::new(rdr) }
+  }
+}

@@ -26,7 +26,7 @@ use {
 };
 
 pub struct Parser<T> {
-  rdr: T,
+  pub rdr: T,
 }
 
 impl<T: Reader> Parser<T> {

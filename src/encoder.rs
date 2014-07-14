@@ -7,6 +7,7 @@ use std::io::{
 use std::mem::{
   transmute,
 };
+use std::collections::HashMap;
 use serialize::Encodable;
 use serialize;
 use {
@@ -27,6 +28,7 @@ use {
   Float32,
   Float64,
   Array,
+  Map
 };
 
 pub fn encode<'a, T: Encodable<Encoder<'a>, IoError>>(object: &T) -> Vec<u8> {
@@ -247,6 +249,9 @@ to_msgpack_values!(
   String(&self) { String(self.clone()) }
   ()(&self) { Nil }
   bool(&self) { Boolean(*self) }
+
+  Vec<MsgPack>(&self) { Array(self.clone()) }
+  HashMap<String, MsgPack>(&self) { Map(self.clone()) }
 )
 
 macro_rules! to_msgpack_tuple {

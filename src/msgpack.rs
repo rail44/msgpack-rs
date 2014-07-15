@@ -78,6 +78,27 @@ impl MsgPack {
     let mut decoder = Decoder::new(self);
     Decodable::decode(&mut decoder)
   }
+
+  pub fn as_string(&self) -> Option<String> {
+    match self.clone() {
+      String(s) => Some(s),
+      _ => None
+    }
+  }
+
+  pub fn as_vec(&self) -> Option<Vec<MsgPack>> {
+    match self.clone() {
+      Array(a) => Some(a),
+      _ => None
+    }
+  }
+
+  pub fn as_hashmap(&self) -> Option<HashMap<String, MsgPack>> {
+    match self.clone() {
+      Map(m) => Some(m),
+      _ => None
+    }
+  }
 }
 
 #[deriving(Clone, PartialEq, Show)]

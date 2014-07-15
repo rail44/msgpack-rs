@@ -270,9 +270,6 @@ to_msgpack_values!(
   String(&self) { String(self.clone()) }
   ()(&self) { Nil }
   bool(&self) { Boolean(*self) }
-
-  Vec<MsgPack>(&self) { Array(self.clone()) }
-  HashMap<String, MsgPack>(&self) { Map(self.clone()) }
 )
 
 macro_rules! to_msgpack_tuple {
@@ -301,6 +298,29 @@ to_msgpack_tuple!(A, B, C, D, E, F, G, H, I)
 to_msgpack_tuple!(A, B, C, D, E, F, G, H, I, J)
 to_msgpack_tuple!(A, B, C, D, E, F, G, H, I, J, K)
 to_msgpack_tuple!(A, B, C, D, E, F, G, H, I, J, K, L)
+
+impl<T: ToMsgPack> ToMsgPack for Vec<T> {
+  fn to_msgpack(&self) -> MsgPack { Array(self.iter().map(|elt| elt.to_msgpack()).collect()) }
+}
+
+impl<T: ToMsgPack> ToMsgPack for HashMap<String, T> {
+  fn to_msgpack(&self) -> MsgPack {
+    let mut d = HashMap::new();
+    for (key, value) in self.iter() {
+      d.insert((*key).clone(), value.to_msgpack());
+    }
+    Map(d)
+  }
+}
+
+impl<T: ToMsgPack> ToMsgPack for Option<T> {
+  fn to_msgpack(&self) -> MsgPack {
+    match *self {
+      None => Nil,
+      Some(ref value) => value.to_msgpack()
+    }
+  }
+}
 
 #[cfg(test)]
 mod test {

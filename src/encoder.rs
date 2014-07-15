@@ -57,9 +57,9 @@ impl<'a> Encoder<'a> {
 pub type EncodeResult = IoResult<()>;
 
 macro_rules! map_type_byte(
-  (FixMap, $byte: expr) => (0x80 + $byte);
-  (FixArray, $byte: expr) => (0x90 + $byte);
-  (FixString, $byte: expr) => (0xa0 + $byte);
+  (FixMap, $len: expr) => (0x80 + $len);
+  (FixArray, $len: expr) => (0x90 + $len);
+  (FixString, $len: expr) => (0xa0 + $len);
   (Nil) => (0xc0);
   (False) => (0xc2);
   (True) => (0xc3);
@@ -73,13 +73,13 @@ macro_rules! map_type_byte(
   (Int16) => (0xd1);
   (Int32) => (0xd2);
   (Int64) => (0xd3);
-  (String8) => (0xd9);
-  (String16) => (0xda);
-  (String32) => (0xdb);
-  (Array16) => (0xdc);
-  (Array32) => (0xdd);
-  (Map16) => (0xde);
-  (Map32) => (0xdf);
+  (String8, $len: expr) => (0xd9);
+  (String16, $len: expr) => (0xda);
+  (String32, $len: expr) => (0xdb);
+  (Array16, $len: expr) => (0xdc);
+  (Array32, $len: expr) => (0xdd);
+  (Map16, $len: expr) => (0xde);
+  (Map32, $len: expr) => (0xdf);
 )
 
 macro_rules! write_data(
@@ -97,18 +97,40 @@ macro_rules! write_data(
   ($slf: expr, Float32, $v: expr) => ($slf.writer.write_be_f32($v));
 
   ($slf: expr, String, $v: expr) => ($slf.writer.write_str($v));
-  ($slf: expr, FixString, $v: expr) => (write_data!($slf, String, $v));
-  ($slf: expr, String8, $v: expr) => (write_data!($slf, String, $v));
-  ($slf: expr, String16, $v: expr) => (write_data!($slf, String, $v));
-  ($slf: expr, String32, $v: expr) => (write_data!($slf, String, $v));
+  ($slf: expr, FixString, $v: expr, $len: expr) => (write_data!($slf, String, $v));
+  ($slf: expr, String8, $v: expr, $len: expr) => ({
+    try!(write_data!($slf, Uint8, $len));
+    write_data!($slf, String, $v)
+  });
+  ($slf: expr, String16, $v: expr, $len: expr) => ({
+    try!(write_data!($slf, Uint16, $len));
+    write_data!($slf, String, $v)
+  });
+  ($slf: expr, String32, $v: expr, $len: expr) => ({
+    try!(write_data!($slf, Uint32, $len));
+    write_data!($slf, String, $v)
+  });
 
   ($slf: expr, Container, $f: expr) => ($f($slf));
-  ($slf: expr, FixMap, $f: expr) => (write_data!($slf, Container, $f));
-  ($slf: expr, Map16, $f: expr) => (write_data!($slf, Container, $f));
-  ($slf: expr, Map32, $f: expr) => (write_data!($slf, Container, $f));
-  ($slf: expr, FixArray, $f: expr) => (write_data!($slf, Container, $f));
-  ($slf: expr, Array16, $f: expr) => (write_data!($slf, Container, $f));
-  ($slf: expr, Array32, $f: expr) => (write_data!($slf, Container, $f));
+  ($slf: expr, FixMap, $f: expr, $len: expr) => (write_data!($slf, Container, $f));
+  ($slf: expr, Map16, $f: expr, $len: expr) => ({
+    try!(write_data!($slf, Uint16, $len));
+    write_data!($slf, Container, $f)
+  });
+  ($slf: expr, Map32, $f: expr, $len: expr) => ({
+    try!(write_data!($slf, Uint32, $len));
+    write_data!($slf, Container, $f)
+  });
+
+  ($slf: expr, FixArray, $f: expr, $len: expr) => (write_data!($slf, Container, $f));
+  ($slf: expr, Array16, $f: expr, $len: expr) => ({
+    try!(write_data!($slf, Uint16, $len));
+    write_data!($slf, Container, $f)
+  });
+  ($slf: expr, Array32, $f: expr, $len: expr) => ({
+    try!(write_data!($slf, Uint32, $len));
+    write_data!($slf, Container, $f)
+  });
 )
 
 macro_rules! write_value(
@@ -120,10 +142,9 @@ macro_rules! write_value(
     write_data!($slf, $t, $v)
   });
 
-  // for fix* types
-  ($slf: expr, $t: ident, $byte: expr, $v: expr) => ({
-    try!($slf.writer.write_u8(map_type_byte!($t, $byte) as u8));
-    write_data!($slf, $t, $v)
+  ($slf: expr, $t: ident, $v: expr, $len: expr) => ({
+    try!($slf.writer.write_u8(map_type_byte!($t, $len) as u8));
+    write_data!($slf, $t, $v, $len)
   });
 )
 
@@ -158,10 +179,10 @@ impl<'a> serialize::Encoder<IoError> for Encoder<'a> {
 
   fn emit_str(&mut self, v: &str) -> EncodeResult {
     match v.len() {
-      0 .. 31 => write_value!(self, FixString, v.len(), v),
-      32 .. 255 => write_value!(self, String8, v),
-      256 .. 65535 => write_value!(self, String16, v),
-      65536 .. 4294967295 => write_value!(self, String32, v),
+      0 .. 31 => write_value!(self, FixString, v, v.len()),
+      32 .. 255 => write_value!(self, String8, v, v.len() as u8),
+      256 .. 65535 => write_value!(self, String16, v, v.len() as u16),
+      65536 .. 4294967295 => write_value!(self, String32, v, v.len() as u32),
       _ => Err(IoError::last_error())
     }
   }
@@ -174,9 +195,9 @@ impl<'a> serialize::Encoder<IoError> for Encoder<'a> {
 
   fn emit_struct(&mut self, _: &str, len: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult {
     match len {
-      0 .. 15 => write_value!(self, FixMap, len, f),
-      16 .. 65535 => write_value!(self, Map16, f),
-      65536 .. 4294967295 => write_value!(self, Map32, f),
+      0 .. 15 => write_value!(self, FixMap, f, len),
+      16 .. 65535 => write_value!(self, Map16, f, len as u16),
+      65536 .. 4294967295 => write_value!(self, Map32, f, len as u32),
       _ => Err(IoError::last_error())
     }
   }
@@ -196,9 +217,9 @@ impl<'a> serialize::Encoder<IoError> for Encoder<'a> {
 
   fn emit_seq(&mut self, len: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult {
     match len {
-      0 .. 15 => write_value!(self, FixArray, len, f),
-      16 .. 65535 => write_value!(self, Array16, f),
-      65536 .. 4294967295 => write_value!(self, Array32, f),
+      0 .. 15 => write_value!(self, FixArray, f, len),
+      16 .. 65535 => write_value!(self, Array16, f, len as u16),
+      65536 .. 4294967295 => write_value!(self, Array32, f, len as u32),
       _ => Err(IoError::last_error())
     }
   }
@@ -206,9 +227,9 @@ impl<'a> serialize::Encoder<IoError> for Encoder<'a> {
 
   fn emit_map(&mut self, len: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult {
     match len {
-      0 .. 15 => write_value!(self, FixMap, len, f),
-      16 .. 65535 => write_value!(self, Map16, f),
-      65536 .. 4294967295 => write_value!(self, Map32, f),
+      0 .. 15 => write_value!(self, FixMap, f, len),
+      16 .. 65535 => write_value!(self, Map16, f, len as u16),
+      65536 .. 4294967295 => write_value!(self, Map32, f, len as u32),
       _ => Err(IoError::last_error())
     }
   }

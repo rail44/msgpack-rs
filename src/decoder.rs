@@ -152,7 +152,15 @@ impl serialize::Decoder<DecodeError> for Decoder {
   fn read_tuple_struct<T>(&mut self, _: &str, f: |&mut Decoder, uint| -> DecodeResult<T>) -> DecodeResult<T> { self.read_tuple(f) }
   fn read_tuple_struct_arg<T>(&mut self, idx: uint, f: |&mut Decoder| -> DecodeResult<T>) -> DecodeResult<T> { self.read_tuple_arg(idx, f) }
 
-  fn read_option<T>(&mut self, _: |&mut Decoder, bool| -> DecodeResult<T>) -> DecodeResult<T> { Err(NotSupportedError) }
+  fn read_option<T>(&mut self, f: |&mut Decoder, bool| -> DecodeResult<T>) -> DecodeResult<T> {
+    match self.pop() {
+      Nil => f(self, false),
+      value => {
+        self.stack.push(value);
+        f(self, true)
+      }
+    }
+  }
 
   fn read_seq<T>(&mut self, f: |&mut Decoder, uint| -> DecodeResult<T>) -> DecodeResult<T> {
     let list = expect!(self.pop(), Array);

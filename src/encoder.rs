@@ -211,9 +211,9 @@ impl<'a> serialize::Encoder<IoError> for Encoder<'a> {
   fn emit_tuple_struct(&mut self, _: &str, len: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult { self.emit_seq(len, f) }
   fn emit_tuple_struct_arg(&mut self, idx: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult { self.emit_seq_elt(idx, f) }
 
-  fn emit_option(&mut self, _: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult { Err(IoError::last_error()) }
-  fn emit_option_none(&mut self) -> EncodeResult { Err(IoError::last_error()) }
-  fn emit_option_some(&mut self, _: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult { Err(IoError::last_error()) }
+  fn emit_option(&mut self, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult { f(self) }
+  fn emit_option_none(&mut self) -> EncodeResult { write_value!(self, Nil) }
+  fn emit_option_some(&mut self, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult { f(self) }
 
   fn emit_seq(&mut self, len: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult {
     match len {

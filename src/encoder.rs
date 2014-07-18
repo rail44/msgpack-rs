@@ -254,22 +254,22 @@ macro_rules! to_msgpack_values(
 to_msgpack_values!(
   MsgPack(&self) { self.clone() }
 
-  i8(&self) { Integer(Int8(*self)) }
-  i16(&self) { Integer(Int16(*self)) }
-  i32(&self) { Integer(Int32(*self)) }
-  i64(&self) { Integer(Int64(*self)) }
+  i8(&self) { Integer(box Int8(*self)) }
+  i16(&self) { Integer(box Int16(*self)) }
+  i32(&self) { Integer(box Int32(*self)) }
+  i64(&self) { Integer(box Int64(*self)) }
 
-  u8(&self) { Integer(Uint8(*self)) }
-  u16(&self) { Integer(Uint16(*self)) }
-  u32(&self) { Integer(Uint32(*self)) }
-  u64(&self) { Integer(Uint64(*self)) }
+  u8(&self) { Integer(box Uint8(*self)) }
+  u16(&self) { Integer(box Uint16(*self)) }
+  u32(&self) { Integer(box Uint32(*self)) }
+  u64(&self) { Integer(box Uint64(*self)) }
 
-  f32(&self) { Float(Float32(*self)) }
-  f64(&self) { Float(Float64(*self)) }
+  f32(&self) { Float(box Float32(*self)) }
+  f64(&self) { Float(box Float64(*self)) }
 
-  String(&self) { String(self.clone()) }
+  String(&self) { String(box self.clone()) }
   ()(&self) { Nil }
-  bool(&self) { Boolean(*self) }
+  bool(&self) { Boolean(box *self) }
 )
 
 macro_rules! to_msgpack_tuple {
@@ -279,7 +279,7 @@ macro_rules! to_msgpack_tuple {
       #[allow(uppercase_variables)]
       fn to_msgpack(&self) -> MsgPack {
         match *self {
-          ($(ref $tyvar),*,) => Array(vec![$($tyvar.to_msgpack()),*])
+          ($(ref $tyvar),*,) => Array(box vec![$($tyvar.to_msgpack()),*])
         }
       }
     }
@@ -300,7 +300,7 @@ to_msgpack_tuple!(A, B, C, D, E, F, G, H, I, J, K)
 to_msgpack_tuple!(A, B, C, D, E, F, G, H, I, J, K, L)
 
 impl<T: ToMsgPack> ToMsgPack for Vec<T> {
-  fn to_msgpack(&self) -> MsgPack { Array(self.iter().map(|elt| elt.to_msgpack()).collect()) }
+  fn to_msgpack(&self) -> MsgPack { Array(box self.iter().map(|elt| elt.to_msgpack()).collect()) }
 }
 
 impl<T: ToMsgPack> ToMsgPack for HashMap<String, T> {
@@ -309,7 +309,7 @@ impl<T: ToMsgPack> ToMsgPack for HashMap<String, T> {
     for (key, value) in self.iter() {
       d.insert((*key).clone(), value.to_msgpack());
     }
-    Map(d)
+    Map(box d)
   }
 }
 

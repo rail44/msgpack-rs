@@ -43,7 +43,7 @@ macro_rules! expect(
     )
   };
   ($e:expr, $t:ident, $($t_rest:ident),+) => {
-    expect!(expect!($e, $t), $($t_rest),+)
+    expect!(*expect!($e, $t), $($t_rest),+)
   }
 )
 
@@ -90,7 +90,7 @@ impl serialize::Decoder<DecodeError> for Decoder {
   fn read_u16(&mut self) -> DecodeResult<u16> { Ok(expect!(self.pop(), Integer, Uint16)) }
   fn read_u8(&mut self) -> DecodeResult<u8> { Ok(expect!(self.pop(), Integer, Uint8)) }
   fn read_uint(&mut self) -> DecodeResult<uint> {
-    match expect!(self.pop(), Integer) {
+    match *expect!(self.pop(), Integer) {
       Uint64(value) => Ok(value as uint),
       Uint32(value) => Ok(value as uint),
       Uint16(value) => Ok(value as uint),
@@ -104,7 +104,7 @@ impl serialize::Decoder<DecodeError> for Decoder {
   fn read_i16(&mut self) -> DecodeResult<i16> { Ok(expect!(self.pop(), Integer, Int16)) }
   fn read_i8(&mut self) -> DecodeResult<i8> { Ok(expect!(self.pop(), Integer, Int8)) }
   fn read_int(&mut self) -> DecodeResult<int> {
-    match expect!(self.pop(), Integer) {
+    match *expect!(self.pop(), Integer) {
       Int64(value) => Ok(value as int),
       Int32(value) => Ok(value as int),
       Int16(value) => Ok(value as int),
@@ -113,14 +113,14 @@ impl serialize::Decoder<DecodeError> for Decoder {
     }
   }
 
-  fn read_bool(&mut self) -> DecodeResult<bool> { Ok(expect!(self.pop(), Boolean)) }
+  fn read_bool(&mut self) -> DecodeResult<bool> { Ok(*expect!(self.pop(), Boolean)) }
 
   fn read_f64(&mut self) -> DecodeResult<f64> { Ok(expect!(self.pop(), Float, Float64)) }
   fn read_f32(&mut self) -> DecodeResult<f32> { Ok(expect!(self.pop(), Float, Float32)) }
 
   fn read_char(&mut self) -> DecodeResult<char> { Err(NotSupportedError) }
 
-  fn read_str(&mut self) -> DecodeResult<String> { Ok(expect!(self.pop(), String)) }
+  fn read_str(&mut self) -> DecodeResult<String> { Ok(*expect!(self.pop(), String)) }
 
   fn read_enum<T>(&mut self, _: &str, _: |&mut Decoder| -> DecodeResult<T>) -> DecodeResult<T> { Err(NotSupportedError) }
   fn read_enum_variant<T>(&mut self, _: &[&str], _: |&mut Decoder, uint| -> DecodeResult<T>) -> DecodeResult<T> { Err(NotSupportedError) }
@@ -177,7 +177,7 @@ impl serialize::Decoder<DecodeError> for Decoder {
     let len = obj.len();
     for (key, value) in obj.move_iter() {
       self.stack.push(value);
-      self.stack.push(String(key));
+      self.stack.push(String(box key));
     }
     f(self, len)
   }

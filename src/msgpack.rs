@@ -34,29 +34,29 @@ mod encoder;
 
 #[deriving(Clone, PartialEq, Show)]
 pub enum MsgPack {
-  Integer(IntegerValue),
+  Integer(Box<IntegerValue>),
   Nil,
-  Boolean(bool),
-  Float(FloatValue),
-  String(String),
-  Binary(Vec<u8>),
-  Array(Vec<MsgPack>),
-  Map(HashMap<String, MsgPack>),
-  Extended((i8, Vec<u8>))
+  Boolean(Box<bool>),
+  Float(Box<FloatValue>),
+  String(Box<String>),
+  Binary(Box<Vec<u8>>),
+  Array(Box<Vec<MsgPack>>),
+  Map(Box<HashMap<String, MsgPack>>),
+  Extended(Box<(i8, Vec<u8>)>)
 }
 
 impl<E: serialize::Encoder<S>, S> Encodable<E, S> for MsgPack {
   fn encode(&self, e: &mut E) -> Result<(), S> {
-    match *self {
-      Integer(v) => v.encode(e),
-      Nil => e.emit_nil(),
-      Boolean(v) => v.encode(e),
-      String(ref v) => v.encode(e),
-      Binary(ref v) => v.encode(e),
-      Array(ref v) => v.encode(e),
-      Map(ref v) => v.encode(e),
-      Float(ref v) => v.encode(e),
-      Extended(ref v) => v.encode(e),
+    match self {
+      &Integer(ref v) => v.encode(e),
+      &Nil => e.emit_nil(),
+      &Boolean(ref v) => v.encode(e),
+      &String(ref v) => v.encode(e),
+      &Binary(ref v) => v.encode(e),
+      &Array(ref v) => v.encode(e),
+      &Map(ref v) => v.encode(e),
+      &Float(ref v) => v.encode(e),
+      &Extended(ref v) => v.encode(e),
     }
   }
 }

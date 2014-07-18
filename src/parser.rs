@@ -38,53 +38,53 @@ impl<T: Reader> Parser<T> {
     let msgpack = match self.rdr.read_byte() {
       Ok(b) => {
         match b {
-          0x00 .. 0x7f => Integer(Uint8(b as u8)),
-          0x80 .. 0x8f => Map(try!(self.read_map_data((b - 0x80) as uint))),
-          0x90 .. 0x9f => Array(try!(self.read_array_data((b - 0x90) as uint))),
-          0xa0 .. 0xbf => String(try!(self.read_bytes((b - 0xa0) as uint).map(|b| String::from_utf8(b).ok().unwrap()))),
+          0x00 .. 0x7f => Integer(box Uint8(b as u8)),
+          0x80 .. 0x8f => Map(box try!(self.read_map_data((b - 0x80) as uint))),
+          0x90 .. 0x9f => Array(box try!(self.read_array_data((b - 0x90) as uint))),
+          0xa0 .. 0xbf => String(box try!(self.read_bytes((b - 0xa0) as uint).map(|b| String::from_utf8(b).ok().unwrap()))),
           0xc0 => Nil,
 
-          0xc2 => Boolean(false),
-          0xc3 => Boolean(true),
+          0xc2 => Boolean(box false),
+          0xc3 => Boolean(box true),
 
-          0xc4 => Binary(try!(self.read_bin8())),
-          0xc5 => Binary(try!(self.read_bin16())),
-          0xc6 => Binary(try!(self.read_bin32())),
+          0xc4 => Binary(box try!(self.read_bin8())),
+          0xc5 => Binary(box try!(self.read_bin16())),
+          0xc6 => Binary(box try!(self.read_bin32())),
 
-          0xc7 => Extended(try!(self.read_ext8())),
-          0xc8 => Extended(try!(self.read_ext16())),
-          0xc9 => Extended(try!(self.read_ext32())),
+          0xc7 => Extended(box try!(self.read_ext8())),
+          0xc8 => Extended(box try!(self.read_ext16())),
+          0xc9 => Extended(box try!(self.read_ext32())),
 
-          0xca => Float(Float32(try!(self.rdr.read_be_f32()))),
-          0xcb => Float(Float64(try!(self.rdr.read_be_f64()))),
+          0xca => Float(box Float32(try!(self.rdr.read_be_f32()))),
+          0xcb => Float(box Float64(try!(self.rdr.read_be_f64()))),
 
-          0xcc => Integer(Uint8(try!(self.rdr.read_u8()))),
-          0xcd => Integer(Uint16(try!(self.rdr.read_be_u16()))),
-          0xce => Integer(Uint32(try!(self.rdr.read_be_u32()))),
-          0xcf => Integer(Uint64(try!(self.rdr.read_be_u64()))),
+          0xcc => Integer(box Uint8(try!(self.rdr.read_u8()))),
+          0xcd => Integer(box Uint16(try!(self.rdr.read_be_u16()))),
+          0xce => Integer(box Uint32(try!(self.rdr.read_be_u32()))),
+          0xcf => Integer(box Uint64(try!(self.rdr.read_be_u64()))),
 
-          0xd0 => Integer(Int8(try!(self.rdr.read_i8()))),
-          0xd1 => Integer(Int16(try!(self.rdr.read_be_i16()))),
-          0xd2 => Integer(Int32(try!(self.rdr.read_be_i32()))),
-          0xd3 => Integer(Int64(try!(self.rdr.read_be_i64()))),
+          0xd0 => Integer(box Int8(try!(self.rdr.read_i8()))),
+          0xd1 => Integer(box Int16(try!(self.rdr.read_be_i16()))),
+          0xd2 => Integer(box Int32(try!(self.rdr.read_be_i32()))),
+          0xd3 => Integer(box Int64(try!(self.rdr.read_be_i64()))),
 
-          0xd4 => Extended(try!(self.read_fixext1())),
-          0xd5 => Extended(try!(self.read_fixext2())),
-          0xd6 => Extended(try!(self.read_fixext4())),
-          0xd7 => Extended(try!(self.read_fixext8())),
-          0xd8 => Extended(try!(self.read_fixext16())),
+          0xd4 => Extended(box try!(self.read_fixext1())),
+          0xd5 => Extended(box try!(self.read_fixext2())),
+          0xd6 => Extended(box try!(self.read_fixext4())),
+          0xd7 => Extended(box try!(self.read_fixext8())),
+          0xd8 => Extended(box try!(self.read_fixext16())),
 
-          0xd9 => String(try!(self.read_bin8().map(|b| String::from_utf8(b).ok().unwrap()))),
-          0xda => String(try!(self.read_bin16().map(|b| String::from_utf8(b).ok().unwrap()))),
-          0xdb => String(try!(self.read_bin32().map(|b| String::from_utf8(b).ok().unwrap()))),
+          0xd9 => String(box try!(self.read_bin8().map(|b| String::from_utf8(b).ok().unwrap()))),
+          0xda => String(box try!(self.read_bin16().map(|b| String::from_utf8(b).ok().unwrap()))),
+          0xdb => String(box try!(self.read_bin32().map(|b| String::from_utf8(b).ok().unwrap()))),
 
-          0xdc => Array(try!(self.read_array16())),
-          0xdd => Array(try!(self.read_array32())),
+          0xdc => Array(box try!(self.read_array16())),
+          0xdd => Array(box try!(self.read_array32())),
 
-          0xde => Map(try!(self.read_map16())),
-          0xdf => Map(try!(self.read_map32())),
+          0xde => Map(box try!(self.read_map16())),
+          0xdf => Map(box try!(self.read_map32())),
 
-          0xe0 .. 0xff => Integer(Int8(b as i8)),
+          0xe0 .. 0xff => Integer(box Int8(b as i8)),
 
           _ => Nil
         }
@@ -196,7 +196,7 @@ impl<T: Reader> Parser<T> {
       let value = try!(itr.next().unwrap());
       match key {
         String(s) => {
-          map.insert(s, value);
+          map.insert(*s, value);
         }
         _ => {
           warn!("Map is now only supported with String key");

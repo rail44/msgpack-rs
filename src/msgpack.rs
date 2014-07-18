@@ -90,6 +90,13 @@ impl MsgPack {
       _ => None
     }
   }
+
+  pub fn contains_key<'a>(&'a self, key: &String) -> bool {
+    match self {
+      &Map(ref map) => map.contains_key(key),
+      _ => false
+    }
+  }
 }
 
 #[deriving(Clone, PartialEq, Show)]

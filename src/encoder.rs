@@ -322,6 +322,12 @@ impl<T: ToMsgPack> ToMsgPack for Option<T> {
   }
 }
 
+impl<'a, T: ToMsgPack+Clone> ToMsgPack for &'a T {
+  fn to_msgpack(&self) -> MsgPack {
+    self.clone().to_msgpack()
+  }
+}
+
 #[cfg(test)]
 mod test {
   #[deriving(PartialEq, Encodable, Decodable, Show)]

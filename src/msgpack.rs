@@ -80,22 +80,22 @@ impl MsgPack {
   }
 
   pub fn as_string(&self) -> Option<String> {
-    match self.clone() {
-      String(s) => Some(s),
+    match self {
+      &String(ref s) => Some(s.clone()),
       _ => None
     }
   }
 
   pub fn as_vec(&self) -> Option<Vec<MsgPack>> {
-    match self.clone() {
-      Array(a) => Some(a),
+    match self {
+      &Array(ref a) => Some(a.clone()),
       _ => None
     }
   }
 
   pub fn as_hashmap(&self) -> Option<HashMap<String, MsgPack>> {
-    match self.clone() {
-      Map(m) => Some(m),
+    match self {
+      &Map(ref m) => Some(m.clone()),
       _ => None
     }
   }

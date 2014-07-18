@@ -68,6 +68,11 @@ impl IntoBytes for MsgPack {
 }
 
 impl MsgPack {
+  pub fn to_writer(&self, writer: &mut Writer) -> IoResult<()> {
+    let mut encoder = Encoder::new(writer);
+    self.encode(&mut encoder)
+  }
+
   pub fn from_bytes(b: &[u8]) -> IoResult<MsgPack> {
     let reader = BufReader::new(b);
     let mut parser = Parser::new(reader);

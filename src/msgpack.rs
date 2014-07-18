@@ -84,23 +84,9 @@ impl MsgPack {
     Decodable::decode(&mut decoder)
   }
 
-  pub fn as_string(&self) -> Option<String> {
+  pub fn find<'a>(&'a self, key: &String) -> Option<&'a MsgPack>{
     match self {
-      &String(ref s) => Some(s.clone()),
-      _ => None
-    }
-  }
-
-  pub fn as_vec(&self) -> Option<Vec<MsgPack>> {
-    match self {
-      &Array(ref a) => Some(a.clone()),
-      _ => None
-    }
-  }
-
-  pub fn as_hashmap(&self) -> Option<HashMap<String, MsgPack>> {
-    match self {
-      &Map(ref m) => Some(m.clone()),
+      &Map(ref map) => map.find(key),
       _ => None
     }
   }

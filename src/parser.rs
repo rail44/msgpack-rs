@@ -98,7 +98,7 @@ impl<T: Reader> Parser<T> {
     let mut buf = Vec::with_capacity(min);
     unsafe { buf.set_len(min); }
     try!(self.rdr.read_at_least(min, buf.as_mut_slice()));
-    Ok(buf.to_owned())
+    Ok(buf)
   }
 
   fn read_ext8(&mut self) -> IoResult<(i8, Vec<u8>)> {

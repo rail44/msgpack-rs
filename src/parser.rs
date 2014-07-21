@@ -1,4 +1,7 @@
-use std::io::IoResult;
+use std::io::{
+  IoError,
+  IoResult
+};
 use std::collections::HashMap;
 use std::iter;
 
@@ -25,6 +28,10 @@ use {
   Extended
 };
 
+macro_rules! to_str(
+  ($bytes: expr) => (String::from_utf8($bytes).map_err(|_| IoError::from_errno(52, true)))
+)
+
 pub struct Parser<T> {
   pub rdr: T,
 }
@@ -41,7 +48,7 @@ impl<T: Reader> Parser<T> {
           0x00 .. 0x7f => Integer(box Uint8(b as u8)),
           0x80 .. 0x8f => Map(box try!(self.read_map_data((b - 0x80) as uint))),
           0x90 .. 0x9f => Array(box try!(self.read_array_data((b - 0x90) as uint))),
-          0xa0 .. 0xbf => String(box try!(self.read_bytes((b - 0xa0) as uint).map(|b| String::from_utf8(b).ok().unwrap()))),
+          0xa0 .. 0xbf => String(box try!(to_str!(try!(self.read_bytes((b - 0xa0) as uint))))),
           0xc0 => Nil,
 
           0xc2 => Boolean(box false),
@@ -74,9 +81,10 @@ impl<T: Reader> Parser<T> {
           0xd7 => Extended(box try!(self.read_fixext8())),
           0xd8 => Extended(box try!(self.read_fixext16())),
 
-          0xd9 => String(box try!(self.read_bin8().map(|b| String::from_utf8(b).ok().unwrap()))),
-          0xda => String(box try!(self.read_bin16().map(|b| String::from_utf8(b).ok().unwrap()))),
-          0xdb => String(box try!(self.read_bin32().map(|b| String::from_utf8(b).ok().unwrap()))),
+          
+          0xd9 => String(box try!(to_str!(try!(self.read_bin8())))),
+          0xda => String(box try!(to_str!(try!(self.read_bin16())))),
+          0xdb => String(box try!(to_str!(try!(self.read_bin32())))),
 
           0xdc => Array(box try!(self.read_array16())),
           0xdd => Array(box try!(self.read_array32())),

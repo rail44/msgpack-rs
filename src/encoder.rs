@@ -7,7 +7,7 @@ use std::io::{
 use std::mem::{
   transmute,
 };
-use std::collections::HashMap;
+use std::collections::TreeMap;
 use serialize::Encodable;
 use serialize;
 use {
@@ -303,9 +303,9 @@ impl<T: ToMsgPack> ToMsgPack for Vec<T> {
   fn to_msgpack(&self) -> MsgPack { Array(box self.iter().map(|elt| elt.to_msgpack()).collect()) }
 }
 
-impl<T: ToMsgPack> ToMsgPack for HashMap<String, T> {
+impl<T: ToMsgPack> ToMsgPack for TreeMap<String, T> {
   fn to_msgpack(&self) -> MsgPack {
-    let mut d = HashMap::new();
+    let mut d = TreeMap::new();
     for (key, value) in self.iter() {
       d.insert((*key).clone(), value.to_msgpack());
     }

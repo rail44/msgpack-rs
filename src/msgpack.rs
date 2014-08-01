@@ -4,7 +4,7 @@
 extern crate log;
 
 extern crate serialize;
-use std::collections::HashMap;
+use std::collections::TreeMap;
 use serialize::{
   Decodable,
   Encodable
@@ -41,7 +41,7 @@ pub enum MsgPack {
   String(Box<String>),
   Binary(Box<Vec<u8>>),
   Array(Box<Vec<MsgPack>>),
-  Map(Box<HashMap<String, MsgPack>>),
+  Map(Box<TreeMap<String, MsgPack>>),
   Extended(Box<(i8, Vec<u8>)>)
 }
 

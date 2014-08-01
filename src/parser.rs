@@ -2,7 +2,7 @@ use std::io::{
   IoError,
   IoResult
 };
-use std::collections::HashMap;
+use std::collections::TreeMap;
 use std::iter;
 
 use {
@@ -195,10 +195,10 @@ impl<T: Reader> Parser<T> {
     self.read_array_data(n as uint)
   }
 
-  fn read_map_data(&mut self, n: uint) -> IoResult<HashMap<String, MsgPack>> {
+  fn read_map_data(&mut self, n: uint) -> IoResult<TreeMap<String, MsgPack>> {
     let mut itr = iter::range(0, 2*n).map(|_| self.parse());
     let mut map_itr = iter::range(0, n);
-    let mut map = HashMap::new();
+    let mut map = TreeMap::new();
     for _ in map_itr {
       let key = try!(itr.next().unwrap());
       let value = try!(itr.next().unwrap());
@@ -214,12 +214,12 @@ impl<T: Reader> Parser<T> {
     Ok(map)
   }
 
-  fn read_map16(&mut self) -> IoResult<HashMap<String, MsgPack>> {
+  fn read_map16(&mut self) -> IoResult<TreeMap<String, MsgPack>> {
     let n = try!(self.rdr.read_be_u16());
     self.read_map_data(n as uint)
   }
 
-  fn read_map32(&mut self) -> IoResult<HashMap<String, MsgPack>> {
+  fn read_map32(&mut self) -> IoResult<TreeMap<String, MsgPack>> {
     let n = try!(self.rdr.read_be_u32());
     self.read_map_data(n as uint)
   }

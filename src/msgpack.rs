@@ -32,7 +32,7 @@ mod parser;
 mod decoder;
 mod encoder;
 
-#[deriving(Clone, PartialEq, Show)]
+#[deriving(Decodable, Clone, PartialEq, Show)]
 pub enum MsgPack {
     Integer(Box<IntegerValue>),
     Nil,
@@ -99,7 +99,7 @@ impl MsgPack {
     }
 }
 
-#[deriving(Clone, PartialEq, Show)]
+#[deriving(Decodable, Clone, PartialEq, Show)]
 pub enum IntegerValue {
     Int8(i8),
     Int16(i16),
@@ -126,7 +126,7 @@ impl<E: serialize::Encoder<S>, S> Encodable<E, S> for IntegerValue {
     }
 }
 
-#[deriving(Clone, PartialEq, Show)]
+#[deriving(Decodable, Clone, PartialEq, Show)]
 pub enum FloatValue {
     Float32(f32),
     Float64(f64)

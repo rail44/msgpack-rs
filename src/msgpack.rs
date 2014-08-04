@@ -26,12 +26,10 @@ pub use encoder::{
 pub use decoder::{
     decode,
     Decoder,
-    DecoderError,
-    DecoderMode
 };
-mod parser;
-mod decoder;
-mod encoder;
+pub mod parser;
+pub mod decoder;
+pub mod encoder;
 
 #[deriving(Decodable, Clone, PartialEq, Show)]
 pub enum MsgPack {
@@ -80,7 +78,7 @@ impl MsgPack {
         parser.parse()
     }
 
-    pub fn decode<T: Decodable<Decoder, DecoderError>>(self, mode: DecoderMode) -> Result<T, DecoderError> {
+    pub fn decode<T: Decodable<Decoder, decoder::DecoderError>>(self, mode: decoder::DecoderMode) -> Result<T, decoder::DecoderError> {
         let mut decoder = Decoder::new(self, mode);
         Decodable::decode(&mut decoder)
     }

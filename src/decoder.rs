@@ -26,24 +26,27 @@ macro_rules! expect(
     ($e:expr, Nil) => {
         try!(
             match $e {
-                Nil => Ok(()),
-                other => Err(ExpectedError("Null".to_string(), format!("{}", other)))
+                Some(v) => match v {
+                    Nil => Ok(()),
+                    other => Err(ExpectedError("Null".to_string(), format!("{}", other)))
+                },
+                None => Err(ExpectedError("Null".to_string(), "EOF".into_string()))
             }
         )
     };
     ($e:expr, $t:ident) => {
         try!(
             match $e {
-                $t(v) => Ok(v),
-                other => {
-                    Err(ExpectedError(stringify!($t).to_string(),
-                    format!("{}", other)))
-                }
+                Some(v1) => match v1 {
+                    $t(v) => Ok(v),
+                    other => Err(ExpectedError(stringify!($t).to_string(), format!("{}", other)))
+                },
+                None => Err(ExpectedError(stringify!($t).to_string(), "EOF".into_string()))
             }
         )
     };
     ($e:expr, $t:ident, $($t_rest:ident),+) => {
-        expect!(*expect!($e, $t), $($t_rest),+)
+        expect!(Some(*expect!($e, $t)), $($t_rest),+)
     }
 )
 
@@ -73,8 +76,8 @@ impl Decoder {
         Decoder { stack: vec![msgpack], mode: mode }
     }
 
-    fn pop(&mut self) -> MsgPack {
-        self.stack.pop().unwrap()
+    fn pop(&mut self) -> Option<MsgPack> {
+        self.stack.pop()
     }
 }
 
@@ -163,11 +166,14 @@ impl serialize::Decoder<DecoderError> for Decoder {
 
     fn read_option<T>(&mut self, f: |&mut Decoder, bool| -> DecodeResult<T>) -> DecodeResult<T> {
         match self.pop() {
-            Nil => f(self, false),
-            value => {
-                self.stack.push(value);
-                f(self, true)
-            }
+            Some(v) => match v {
+                Nil => f(self, false),
+                value => {
+                    self.stack.push(value);
+                    f(self, true)
+                }
+            },
+            None => Err(ExpectedError(stringify!($t).to_string(), "EOF".into_string()))
         }
     }
 

@@ -6,27 +6,27 @@ extern crate log;
 extern crate serialize;
 use std::collections::TreeMap;
 use serialize::{
-  Decodable,
-  Encodable
+    Decodable,
+    Encodable
 };
 use std::io::{
-  IoResult,
-  BufReader
+    IoResult,
+    BufReader
 };
 
 pub use parser::{
-  Parser,
-  StreamParser
+    Parser,
+    StreamParser
 };
 pub use encoder::{
-  encode,
-  Encoder,
-  ToMsgPack
+    encode,
+    Encoder,
+    ToMsgPack
 };
 pub use decoder::{
-  decode,
-  Decoder,
-  DecodeError
+    decode,
+    Decoder,
+    DecoderError
 };
 mod parser;
 mod decoder;
@@ -34,109 +34,109 @@ mod encoder;
 
 #[deriving(Clone, PartialEq, Show)]
 pub enum MsgPack {
-  Integer(Box<IntegerValue>),
-  Nil,
-  Boolean(Box<bool>),
-  Float(Box<FloatValue>),
-  String(Box<String>),
-  Binary(Box<Vec<u8>>),
-  Array(Box<Vec<MsgPack>>),
-  Map(Box<TreeMap<String, MsgPack>>),
-  Extended(Box<(i8, Vec<u8>)>)
+    Integer(Box<IntegerValue>),
+    Nil,
+    Boolean(Box<bool>),
+    Float(Box<FloatValue>),
+    String(Box<String>),
+    Binary(Box<Vec<u8>>),
+    Array(Box<Vec<MsgPack>>),
+    Map(Box<TreeMap<String, MsgPack>>),
+    Extended(Box<(i8, Vec<u8>)>)
 }
 
 impl<E: serialize::Encoder<S>, S> Encodable<E, S> for MsgPack {
-  fn encode(&self, e: &mut E) -> Result<(), S> {
-    match self {
-      &Integer(ref v) => v.encode(e),
-      &Nil => e.emit_nil(),
-      &Boolean(ref v) => v.encode(e),
-      &String(ref v) => v.encode(e),
-      &Binary(ref v) => v.encode(e),
-      &Array(ref v) => v.encode(e),
-      &Map(ref v) => v.encode(e),
-      &Float(ref v) => v.encode(e),
-      &Extended(ref v) => v.encode(e),
+    fn encode(&self, e: &mut E) -> Result<(), S> {
+        match self {
+            &Integer(ref v) => v.encode(e),
+            &Nil => e.emit_nil(),
+            &Boolean(ref v) => v.encode(e),
+            &String(ref v) => v.encode(e),
+            &Binary(ref v) => v.encode(e),
+            &Array(ref v) => v.encode(e),
+            &Map(ref v) => v.encode(e),
+            &Float(ref v) => v.encode(e),
+            &Extended(ref v) => v.encode(e),
+        }
     }
-  }
 }
 
 impl IntoBytes for MsgPack {
-  fn into_bytes(self) -> Vec<u8> {
-    encode(&self)
-  }
+    fn into_bytes(self) -> Vec<u8> {
+        encode(&self)
+    }
 }
 
 impl MsgPack {
-  pub fn to_writer(&self, writer: &mut Writer) -> IoResult<()> {
-    let mut encoder = Encoder::new(writer);
-    self.encode(&mut encoder)
-  }
-
-  pub fn from_bytes(b: &[u8]) -> IoResult<MsgPack> {
-    let reader = BufReader::new(b);
-    let mut parser = Parser::new(reader);
-    parser.parse()
-  }
-
-  pub fn decode<T: Decodable<Decoder, DecodeError>>(self) -> Result<T, DecodeError> {
-    let mut decoder = Decoder::new(self);
-    Decodable::decode(&mut decoder)
-  }
-
-  pub fn find<'a>(&'a self, key: &String) -> Option<&'a MsgPack>{
-    match self {
-      &Map(ref map) => map.find(key),
-      _ => None
+    pub fn to_writer(&self, writer: &mut Writer) -> IoResult<()> {
+        let mut encoder = Encoder::new(writer);
+        self.encode(&mut encoder)
     }
-  }
 
-  pub fn contains_key<'a>(&'a self, key: &String) -> bool {
-    match self {
-      &Map(ref map) => map.contains_key(key),
-      _ => false
+    pub fn from_bytes(b: &[u8]) -> IoResult<MsgPack> {
+        let reader = BufReader::new(b);
+        let mut parser = Parser::new(reader);
+        parser.parse()
     }
-  }
+
+    pub fn decode<T: Decodable<Decoder, DecoderError>>(self) -> Result<T, DecoderError> {
+        let mut decoder = Decoder::new(self);
+        Decodable::decode(&mut decoder)
+    }
+
+    pub fn find<'a>(&'a self, key: &String) -> Option<&'a MsgPack>{
+        match self {
+            &Map(ref map) => map.find(key),
+            _ => None
+        }
+    }
+
+    pub fn contains_key<'a>(&'a self, key: &String) -> bool {
+        match self {
+            &Map(ref map) => map.contains_key(key),
+            _ => false
+        }
+    }
 }
 
 #[deriving(Clone, PartialEq, Show)]
 pub enum IntegerValue {
-  Int8(i8),
-  Int16(i16),
-  Int32(i32),
-  Int64(i64),
-  Uint8(u8),
-  Uint16(u16),
-  Uint32(u32),
-  Uint64(u64)
+    Int8(i8),
+    Int16(i16),
+    Int32(i32),
+    Int64(i64),
+    Uint8(u8),
+    Uint16(u16),
+    Uint32(u32),
+    Uint64(u64)
 }
 
 impl<E: serialize::Encoder<S>, S> Encodable<E, S> for IntegerValue {
-  fn encode(&self, e: &mut E) -> Result<(), S> {
-    match *self {
-      Int8(v) => v.encode(e),
-      Int16(v) => v.encode(e),
-      Int32(v) => v.encode(e),
-      Int64(v) => v.encode(e),
-      Uint8(v) => v.encode(e),
-      Uint16(v) => v.encode(e),
-      Uint32(v) => v.encode(e),
-      Uint64(v) => v.encode(e)
+    fn encode(&self, e: &mut E) -> Result<(), S> {
+        match *self {
+            Int8(v) => v.encode(e),
+            Int16(v) => v.encode(e),
+            Int32(v) => v.encode(e),
+            Int64(v) => v.encode(e),
+            Uint8(v) => v.encode(e),
+            Uint16(v) => v.encode(e),
+            Uint32(v) => v.encode(e),
+            Uint64(v) => v.encode(e)
+        }
     }
-  }
 }
 
 #[deriving(Clone, PartialEq, Show)]
 pub enum FloatValue {
-  Float32(f32),
-  Float64(f64)
+    Float32(f32),
+    Float64(f64)
 }
 
 impl<E: serialize::Encoder<S>, S> Encodable<E, S> for FloatValue {
-  fn encode(&self, e: &mut E) -> Result<(), S> {
-    match *self {
-      Float32(v) => v.encode(e),
-      Float64(v) => v.encode(e)
+    fn encode(&self, e: &mut E) -> Result<(), S> {
+        match *self {
+            Float32(v) => v.encode(e),
+            Float64(v) => v.encode(e)
+        }
     }
-  }
 }

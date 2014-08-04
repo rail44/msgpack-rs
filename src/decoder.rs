@@ -55,16 +55,22 @@ pub enum DecoderError {
     ApplicationError(String)
 }
 
+pub enum DecoderMode {
+    Strict,
+    Soft
+}
+
 // Decoder
 pub struct Decoder {
     stack: Vec<MsgPack>,
+    mode: DecoderMode
 }
 
 type DecodeResult<T> = Result<T, DecoderError>;
 
 impl Decoder {
-    pub fn new(msgpack: MsgPack) -> Decoder {
-        Decoder { stack: vec![msgpack] }
+    pub fn new(msgpack: MsgPack, mode: DecoderMode) -> Decoder {
+        Decoder { stack: vec![msgpack], mode: mode }
     }
 
     fn pop(&mut self) -> MsgPack {
@@ -73,13 +79,13 @@ impl Decoder {
 }
 
 
-pub fn decode<T: Decodable<Decoder, DecoderError>>(s: &[u8]) -> Result<T, DecoderError> {
+pub fn decode<T: Decodable<Decoder, DecoderError>>(s: &[u8], mode: DecoderMode) -> Result<T, DecoderError> {
     let msgpack = match MsgPack::from_bytes(s) {
         Ok(x) => x,
         Err(e) => fail!("{}",e)
     };
 
-    let mut decoder = Decoder::new(msgpack);
+    let mut decoder = Decoder::new(msgpack, mode);
     Decodable::decode(&mut decoder)
 }
 
@@ -134,16 +140,18 @@ impl serialize::Decoder<DecoderError> for Decoder {
         self.pop();
         Ok(value)
     }
+
     fn read_struct_field<T>(&mut self, name: &str, _: uint, f: |&mut Decoder| -> DecodeResult<T>) -> DecodeResult<T> {
         let mut obj = expect!(self.pop(), Map);
 
-        let value = match obj.pop(&name.to_string()) {
-            None => return Err(MissingFieldError(name.to_string())),
-            Some(msgpack) => {
-                self.stack.push(msgpack);
-                try!(f(self))
-            }
+        match obj.pop(&name.to_string()) {
+            None => match self.mode {
+                Strict => return Err(MissingFieldError(name.to_string())),
+                Soft => self.stack.push(Nil)
+            },
+            Some(msgpack) => self.stack.push(msgpack)
         };
+        let value = try!(f(self));
         self.stack.push(Map(obj));
         Ok(value)
     }
@@ -200,7 +208,7 @@ mod test {
     #[test]
     fn test_decode_for_struct() {
         let b = b"\x83\xA1a\xC0\xA1b\x02\xA1c\x92\xA3abc\xA3xyz";
-        let v: Inner = super::decode(b).unwrap();
+        let v: Inner = super::decode(b, super::Strict).unwrap();
         assert_eq!(
             v,
             Inner { a: (), b: 2, c: vec!["abc".to_string(), "xyz".to_string()] }

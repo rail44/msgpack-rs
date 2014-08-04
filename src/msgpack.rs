@@ -26,7 +26,8 @@ pub use encoder::{
 pub use decoder::{
     decode,
     Decoder,
-    DecoderError
+    DecoderError,
+    DecoderMode
 };
 mod parser;
 mod decoder;
@@ -79,8 +80,8 @@ impl MsgPack {
         parser.parse()
     }
 
-    pub fn decode<T: Decodable<Decoder, DecoderError>>(self) -> Result<T, DecoderError> {
-        let mut decoder = Decoder::new(self);
+    pub fn decode<T: Decodable<Decoder, DecoderError>>(self, mode: DecoderMode) -> Result<T, DecoderError> {
+        let mut decoder = Decoder::new(self, mode);
         Decodable::decode(&mut decoder)
     }
 

@@ -4,6 +4,7 @@ use std::io::{
 };
 use std::collections::TreeMap;
 use std::iter;
+use std::string::String as RustString;
 
 use {
     MsgPack,
@@ -29,7 +30,7 @@ use {
 };
 
 macro_rules! to_str(
-    ($bytes: expr) => (String::from_utf8($bytes).map_err(|_| IoError::from_errno(52, true)))
+    ($bytes: expr) => (RustString::from_utf8($bytes).map_err(|_| IoError::from_errno(52, true)))
 )
 
 pub struct Parser<T> {
@@ -195,7 +196,7 @@ impl<T: Reader> Parser<T> {
         self.read_array_data(n as uint)
     }
 
-    fn read_map_data(&mut self, n: uint) -> IoResult<TreeMap<String, MsgPack>> {
+    fn read_map_data(&mut self, n: uint) -> IoResult<TreeMap<RustString, MsgPack>> {
         let mut itr = iter::range(0, 2*n).map(|_| self.parse());
         let mut map_itr = iter::range(0, n);
         let mut map = TreeMap::new();
@@ -214,12 +215,12 @@ impl<T: Reader> Parser<T> {
         Ok(map)
     }
 
-    fn read_map16(&mut self) -> IoResult<TreeMap<String, MsgPack>> {
+    fn read_map16(&mut self) -> IoResult<TreeMap<RustString, MsgPack>> {
         let n = try!(self.rdr.read_be_u16());
         self.read_map_data(n as uint)
     }
 
-    fn read_map32(&mut self) -> IoResult<TreeMap<String, MsgPack>> {
+    fn read_map32(&mut self) -> IoResult<TreeMap<RustString, MsgPack>> {
         let n = try!(self.rdr.read_be_u32());
         self.read_map_data(n as uint)
     }

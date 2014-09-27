@@ -8,6 +8,7 @@ use std::mem::{
     transmute,
 };
 use std::collections::TreeMap;
+use std::string::String as RustString;
 use serialize::Encodable;
 use serialize;
 use {
@@ -36,7 +37,7 @@ pub fn encode<'a, T: Encodable<Encoder<'a>, IoError>>(object: &T) -> Vec<u8> {
 }
 
 pub struct Encoder<'a> {
-    writer: &'a mut Writer,
+    writer: &'a mut Writer+'a,
 }
 
 impl<'a> Encoder<'a> {
@@ -266,7 +267,7 @@ to_msgpack_values!(
     f32(&self) { Float(box Float32(*self)) }
     f64(&self) { Float(box Float64(*self)) }
 
-    String(&self) { String(box self.clone()) }
+    RustString(&self) { String(box self.clone()) }
     ()(&self) { Nil }
     bool(&self) { Boolean(box *self) }
 )
@@ -302,7 +303,7 @@ impl<T: ToMsgPack> ToMsgPack for Vec<T> {
     fn to_msgpack(&self) -> MsgPack { Array(box self.iter().map(|elt| elt.to_msgpack()).collect()) }
 }
 
-impl<T: ToMsgPack> ToMsgPack for TreeMap<String, T> {
+impl<T: ToMsgPack> ToMsgPack for TreeMap<RustString, T> {
     fn to_msgpack(&self) -> MsgPack {
         let mut d = TreeMap::new();
         for (key, value) in self.iter() {

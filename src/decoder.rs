@@ -1,5 +1,6 @@
 use serialize;
 use serialize::Decodable;
+use std::string::String as RustString;
 
 use {
     MsgPack,
@@ -53,9 +54,9 @@ macro_rules! expect(
 #[deriving(Clone, PartialEq, Show)]
 pub enum DecoderError {
     NotSupportedError,
-    ExpectedError(String, String),
-    MissingFieldError(String),
-    ApplicationError(String)
+    ExpectedError(RustString, RustString),
+    MissingFieldError(RustString),
+    ApplicationError(RustString)
 }
 
 pub enum DecoderMode {
@@ -130,7 +131,7 @@ impl serialize::Decoder<DecoderError> for Decoder {
 
     fn read_char(&mut self) -> DecodeResult<char> { Err(NotSupportedError) }
 
-    fn read_str(&mut self) -> DecodeResult<String> { Ok(*expect!(self.pop(), String)) }
+    fn read_str(&mut self) -> DecodeResult<RustString> { Ok(*expect!(self.pop(), String)) }
 
     fn read_enum<T>(&mut self, _: &str, _: |&mut Decoder| -> DecodeResult<T>) -> DecodeResult<T> { Err(NotSupportedError) }
     fn read_enum_variant<T>(&mut self, _: &[&str], _: |&mut Decoder, uint| -> DecodeResult<T>) -> DecodeResult<T> { Err(NotSupportedError) }

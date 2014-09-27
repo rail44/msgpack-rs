@@ -13,6 +13,7 @@ use std::io::{
     IoResult,
     BufReader
 };
+use std::string::String as RustString;
 
 pub use parser::{
     Parser,
@@ -37,10 +38,10 @@ pub enum MsgPack {
     Nil,
     Boolean(Box<bool>),
     Float(Box<FloatValue>),
-    String(Box<String>),
+    String(Box<RustString>),
     Binary(Box<Vec<u8>>),
     Array(Box<Vec<MsgPack>>),
-    Map(Box<TreeMap<String, MsgPack>>),
+    Map(Box<TreeMap<RustString, MsgPack>>),
     Extended(Box<(i8, Vec<u8>)>)
 }
 
@@ -83,14 +84,14 @@ impl MsgPack {
         Decodable::decode(&mut decoder)
     }
 
-    pub fn find<'a>(&'a self, key: &String) -> Option<&'a MsgPack>{
+    pub fn find<'a>(&'a self, key: &RustString) -> Option<&'a MsgPack>{
         match self {
             &Map(ref map) => map.find(key),
             _ => None
         }
     }
 
-    pub fn contains_key<'a>(&'a self, key: &String) -> bool {
+    pub fn contains_key<'a>(&'a self, key: &RustString) -> bool {
         match self {
             &Map(ref map) => map.contains_key(key),
             _ => false

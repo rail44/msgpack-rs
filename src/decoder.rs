@@ -181,7 +181,7 @@ impl serialize::Decoder<DecoderError> for Decoder {
     fn read_seq<T>(&mut self, f: |&mut Decoder, uint| -> DecodeResult<T>) -> DecodeResult<T> {
         let list = expect!(self.pop(), Array);
         let len = list.len();
-        for v in list.move_iter().rev() {
+        for v in list.into_iter().rev() {
             self.stack.push(v);
         }
         f(self, len)
@@ -191,7 +191,7 @@ impl serialize::Decoder<DecoderError> for Decoder {
     fn read_map<T>(&mut self, f: |&mut Decoder, uint| -> DecodeResult<T>) -> DecodeResult<T> {
         let obj = expect!(self.pop(), Map);
         let len = obj.len();
-        for (key, value) in obj.move_iter() {
+        for (key, value) in obj.into_iter() {
             self.stack.push(value);
             self.stack.push(String(box key));
         }

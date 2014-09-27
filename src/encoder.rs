@@ -276,7 +276,7 @@ macro_rules! to_msgpack_tuple {
     ($($tyvar:ident),*) => {
         impl<$($tyvar: ToMsgPack),*> ToMsgPack for ($($tyvar),*,) {
             #[inline]
-            #[allow(uppercase_variables)]
+            #[allow(non_snake_case)]
             fn to_msgpack(&self) -> MsgPack {
                 match *self {
                     ($(ref $tyvar),*,) => Array(box vec![$($tyvar.to_msgpack()),*])

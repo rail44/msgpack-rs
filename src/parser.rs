@@ -46,10 +46,10 @@ impl<T: Reader> Parser<T> {
         let msgpack = match self.rdr.read_byte() {
             Ok(b) => {
                 match b {
-                    0x00 .. 0x7f => Integer(box Uint8(b as u8)),
-                    0x80 .. 0x8f => Map(box try!(self.read_map_data((b - 0x80) as uint))),
-                    0x90 .. 0x9f => Array(box try!(self.read_array_data((b - 0x90) as uint))),
-                    0xa0 .. 0xbf => String(box try!(to_str!(try!(self.read_bytes((b - 0xa0) as uint))))),
+                    0x00 ... 0x7f => Integer(box Uint8(b as u8)),
+                    0x80 ... 0x8f => Map(box try!(self.read_map_data((b - 0x80) as uint))),
+                    0x90 ... 0x9f => Array(box try!(self.read_array_data((b - 0x90) as uint))),
+                    0xa0 ... 0xbf => String(box try!(to_str!(try!(self.read_bytes((b - 0xa0) as uint))))),
                     0xc0 => Nil,
 
                     0xc2 => Boolean(box false),
@@ -93,7 +93,7 @@ impl<T: Reader> Parser<T> {
                     0xde => Map(box try!(self.read_map16())),
                     0xdf => Map(box try!(self.read_map32())),
 
-                    0xe0 .. 0xff => Integer(box Int8(b as i8)),
+                    0xe0 ... 0xff => Integer(box Int8(b as i8)),
 
                     _ => Nil
                 }

@@ -179,10 +179,10 @@ impl<'a> serialize::Encoder<IoError> for Encoder<'a> {
 
     fn emit_str(&mut self, v: &str) -> EncodeResult {
         match v.len() {
-            0 .. 31 => write_value!(self, FixString, v, v.len()),
-            32 .. 255 => write_value!(self, String8, v, v.len() as u8),
-            256 .. 65535 => write_value!(self, String16, v, v.len() as u16),
-            65536 .. 4294967295 => write_value!(self, String32, v, v.len() as u32),
+            0 ... 31 => write_value!(self, FixString, v, v.len()),
+            32 ... 255 => write_value!(self, String8, v, v.len() as u8),
+            256 ... 65535 => write_value!(self, String16, v, v.len() as u16),
+            65536 ... 4294967295 => write_value!(self, String32, v, v.len() as u32),
             _ => Err(IoError::last_error())
         }
     }
@@ -195,9 +195,9 @@ impl<'a> serialize::Encoder<IoError> for Encoder<'a> {
 
     fn emit_struct(&mut self, _: &str, len: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult {
         match len {
-            0 .. 15 => write_value!(self, FixMap, f, len),
-            16 .. 65535 => write_value!(self, Map16, f, len as u16),
-            65536 .. 4294967295 => write_value!(self, Map32, f, len as u32),
+            0 ... 15 => write_value!(self, FixMap, f, len),
+            16 ... 65535 => write_value!(self, Map16, f, len as u16),
+            65536 ... 4294967295 => write_value!(self, Map32, f, len as u32),
             _ => Err(IoError::last_error())
         }
     }
@@ -217,9 +217,9 @@ impl<'a> serialize::Encoder<IoError> for Encoder<'a> {
 
     fn emit_seq(&mut self, len: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult {
         match len {
-            0 .. 15 => write_value!(self, FixArray, f, len),
-            16 .. 65535 => write_value!(self, Array16, f, len as u16),
-            65536 .. 4294967295 => write_value!(self, Array32, f, len as u32),
+            0 ... 15 => write_value!(self, FixArray, f, len),
+            16 ... 65535 => write_value!(self, Array16, f, len as u16),
+            65536 ... 4294967295 => write_value!(self, Array32, f, len as u32),
             _ => Err(IoError::last_error())
         }
     }
@@ -227,9 +227,9 @@ impl<'a> serialize::Encoder<IoError> for Encoder<'a> {
 
     fn emit_map(&mut self, len: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult {
         match len {
-            0 .. 15 => write_value!(self, FixMap, f, len),
-            16 .. 65535 => write_value!(self, Map16, f, len as u16),
-            65536 .. 4294967295 => write_value!(self, Map32, f, len as u32),
+            0 ... 15 => write_value!(self, FixMap, f, len),
+            16 ... 65535 => write_value!(self, Map16, f, len as u16),
+            65536 ... 4294967295 => write_value!(self, Map32, f, len as u32),
             _ => Err(IoError::last_error())
         }
     }

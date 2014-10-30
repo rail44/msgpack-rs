@@ -86,7 +86,7 @@ impl Decoder {
 pub fn decode<T: Decodable<Decoder, DecoderError>>(s: &[u8], mode: DecoderMode) -> Result<T, DecoderError> {
     let msgpack = match MsgPack::from_bytes(s) {
         Ok(x) => x,
-        Err(e) => fail!("{}",e)
+        Err(e) => panic!("{}",e)
     };
 
     let mut decoder = Decoder::new(msgpack, mode);

@@ -11,12 +11,17 @@ use std::collections::TreeMap;
 use std::string::String as RustString;
 use serialize::Encodable;
 use serialize;
-use {
-    MsgPack,
+use MsgPack;
+use MsgPack::{
     Nil,
     Boolean,
     String,
     Integer,
+    Float,
+    Array,
+    Map
+};
+use IntegerValue::{
     Int8,
     Int16,
     Int32,
@@ -24,12 +29,11 @@ use {
     Uint8,
     Uint16,
     Uint32,
-    Uint64,
-    Float,
+    Uint64
+};
+use FloatValue::{
     Float32,
-    Float64,
-    Array,
-    Map
+    Float64
 };
 
 pub fn encode<'a, T: Encodable<Encoder<'a>, IoError>>(object: &T) -> Vec<u8> {
@@ -37,7 +41,7 @@ pub fn encode<'a, T: Encodable<Encoder<'a>, IoError>>(object: &T) -> Vec<u8> {
 }
 
 pub struct Encoder<'a> {
-    writer: &'a mut Writer+'a,
+    writer: &'a mut (Writer+'a),
 }
 
 impl<'a> Encoder<'a> {
@@ -51,7 +55,7 @@ impl<'a> Encoder<'a> {
             let mut encoder = Encoder::new(&mut m as &mut Writer);
             let _ = object.encode(transmute(&mut encoder));
         }
-        m.unwrap()
+        m.into_inner()
     }
 }
 
@@ -242,7 +246,7 @@ pub trait ToMsgPack {
 }
 
 macro_rules! to_msgpack_values(
-    ($($t: ty (&$me: ident) $block: block)+) => (
+    ($me: ident, $($t: ty $block: block)+) => (
         $(
             impl ToMsgPack for $t {
                 fn to_msgpack(&$me) -> MsgPack $block
@@ -251,25 +255,25 @@ macro_rules! to_msgpack_values(
     )
 )
 
-to_msgpack_values!(
-    MsgPack(&self) { self.clone() }
+to_msgpack_values!(self,
+    MsgPack { self.clone() }
 
-    i8(&self) { Integer(box Int8(*self)) }
-    i16(&self) { Integer(box Int16(*self)) }
-    i32(&self) { Integer(box Int32(*self)) }
-    i64(&self) { Integer(box Int64(*self)) }
+    i8 { Integer(box Int8(*self)) }
+    i16 { Integer(box Int16(*self)) }
+    i32 { Integer(box Int32(*self)) }
+    i64 { Integer(box Int64(*self)) }
 
-    u8(&self) { Integer(box Uint8(*self)) }
-    u16(&self) { Integer(box Uint16(*self)) }
-    u32(&self) { Integer(box Uint32(*self)) }
-    u64(&self) { Integer(box Uint64(*self)) }
+    u8 { Integer(box Uint8(*self)) }
+    u16 { Integer(box Uint16(*self)) }
+    u32 { Integer(box Uint32(*self)) }
+    u64 { Integer(box Uint64(*self)) }
 
-    f32(&self) { Float(box Float32(*self)) }
-    f64(&self) { Float(box Float64(*self)) }
+    f32 { Float(box Float32(*self)) }
+    f64 { Float(box Float64(*self)) }
 
-    RustString(&self) { String(box self.clone()) }
-    ()(&self) { Nil }
-    bool(&self) { Boolean(box *self) }
+    RustString { String(box self.clone()) }
+    () { Nil }
+    bool { Boolean(box *self) }
 )
 
 macro_rules! to_msgpack_tuple {

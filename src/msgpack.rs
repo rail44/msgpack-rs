@@ -14,6 +14,31 @@ use std::io::{
     BufReader
 };
 use std::string::String as RustString;
+use MsgPack::{
+    Nil,
+    Boolean,
+    String,
+    Integer,
+    Float,
+    Array,
+    Binary,
+    Extended,
+    Map
+};
+use IntegerValue::{
+    Int8,
+    Int16,
+    Int32,
+    Int64,
+    Uint8,
+    Uint16,
+    Uint32,
+    Uint64
+};
+use FloatValue::{
+    Float32,
+    Float64
+};
 
 pub use parser::{
     Parser,
@@ -86,7 +111,7 @@ impl MsgPack {
 
     pub fn find<'a>(&'a self, key: &RustString) -> Option<&'a MsgPack>{
         match self {
-            &Map(ref map) => map.find(key),
+            &Map(ref map) => map.get(key),
             _ => None
         }
     }

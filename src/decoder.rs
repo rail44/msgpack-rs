@@ -2,12 +2,17 @@ use serialize;
 use serialize::Decodable;
 use std::string::String as RustString;
 
-use {
-    MsgPack,
+use MsgPack;
+use MsgPack::{
     Nil,
     Boolean,
     String,
     Integer,
+    Float,
+    Array,
+    Map
+};
+use IntegerValue::{
     Int8,
     Int16,
     Int32,
@@ -15,13 +20,14 @@ use {
     Uint8,
     Uint16,
     Uint32,
-    Uint64,
-    Float,
-    Float32,
-    Float64,
-    Map,
-    Array,
+    Uint64
 };
+use FloatValue::{
+    Float32,
+    Float64
+};
+use self::DecoderError::{ApplicationError, ExpectedError, MissingFieldError, NotSupportedError};
+use self::DecoderMode::{Strict, Soft};
 
 macro_rules! expect(
     ($e:expr, Nil) => {
@@ -86,7 +92,7 @@ impl Decoder {
 pub fn decode<T: Decodable<Decoder, DecoderError>>(s: &[u8], mode: DecoderMode) -> Result<T, DecoderError> {
     let msgpack = match MsgPack::from_bytes(s) {
         Ok(x) => x,
-        Err(e) => fail!("{}",e)
+        Err(e) => panic!("{}",e)
     };
 
     let mut decoder = Decoder::new(msgpack, mode);
@@ -148,7 +154,7 @@ impl serialize::Decoder<DecoderError> for Decoder {
     fn read_struct_field<T>(&mut self, name: &str, _: uint, f: |&mut Decoder| -> DecodeResult<T>) -> DecodeResult<T> {
         let mut obj = expect!(self.pop(), Map);
 
-        match obj.pop(&name.to_string()) {
+        match obj.remove(&name.to_string()) {
             None => match self.mode {
                 Strict => return Err(MissingFieldError(name.to_string())),
                 Soft => self.stack.push(Nil)
@@ -160,9 +166,9 @@ impl serialize::Decoder<DecoderError> for Decoder {
         Ok(value)
     }
 
-    fn read_tuple<T>(&mut self, f: |&mut Decoder, uint| -> DecodeResult<T>) -> DecodeResult<T> { self.read_seq(f) }
+    fn read_tuple<T>(&mut self, _: uint, f: |&mut Decoder| -> DecodeResult<T>) -> DecodeResult<T> { self.read_seq(|d: &mut Decoder, _: uint| -> DecodeResult<T> f(d)) }
     fn read_tuple_arg<T>(&mut self, idx: uint, f: |&mut Decoder| -> DecodeResult<T>) -> DecodeResult<T> { self.read_seq_elt(idx, f) }
-    fn read_tuple_struct<T>(&mut self, _: &str, f: |&mut Decoder, uint| -> DecodeResult<T>) -> DecodeResult<T> { self.read_tuple(f) }
+    fn read_tuple_struct<T>(&mut self, _: &str, len: uint, f: |&mut Decoder| -> DecodeResult<T>) -> DecodeResult<T> { self.read_tuple(len, f) }
     fn read_tuple_struct_arg<T>(&mut self, idx: uint, f: |&mut Decoder| -> DecodeResult<T>) -> DecodeResult<T> { self.read_tuple_arg(idx, f) }
 
     fn read_option<T>(&mut self, f: |&mut Decoder, bool| -> DecodeResult<T>) -> DecodeResult<T> {
@@ -215,7 +221,7 @@ mod test {
     #[test]
     fn test_decode_for_struct() {
         let b = b"\x83\xA1a\xC0\xA1b\x02\xA1c\x92\xA3abc\xA3xyz";
-        let v: Inner = super::decode(b, super::Strict).unwrap();
+        let v: Inner = super::decode(b, super::DecoderMode::Strict).unwrap();
         assert_eq!(
             v,
             Inner { a: (), b: 2, c: vec!["abc".to_string(), "xyz".to_string()] }

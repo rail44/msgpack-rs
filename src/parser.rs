@@ -6,13 +6,19 @@ use std::collections::TreeMap;
 use std::iter;
 use std::string::String as RustString;
 
-use {
-    MsgPack,
+use MsgPack;
+use MsgPack::{
     Nil,
     Boolean,
-    Binary,
     String,
     Integer,
+    Float,
+    Array,
+    Binary,
+    Extended,
+    Map
+};
+use IntegerValue::{
     Int8,
     Int16,
     Int32,
@@ -20,13 +26,11 @@ use {
     Uint8,
     Uint16,
     Uint32,
-    Uint64,
-    Float,
+    Uint64
+};
+use FloatValue::{
     Float32,
-    Float64,
-    Map,
-    Array,
-    Extended
+    Float64
 };
 
 macro_rules! to_str(

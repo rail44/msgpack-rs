@@ -191,13 +191,23 @@ impl<'a> serialize::Encoder<IoError> for Encoder<'a> {
         }
     }
 
-    fn emit_enum(&mut self, _name: &str, _: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult { Err(IoError::last_error()) }
-    fn emit_enum_variant(&mut self, _: &str, _: uint, _: uint, _: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult { Err(IoError::last_error()) }
-    fn emit_enum_variant_arg(&mut self, _: uint, _: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult { Err(IoError::last_error()) }
-    fn emit_enum_struct_variant(&mut self, name: &str, id: uint, cnt: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult { self.emit_enum_variant(name, id, cnt, f) }
-    fn emit_enum_struct_variant_field(&mut self, _: &str, idx: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult { self.emit_enum_variant_arg(idx, f) }
+    fn emit_enum<F>(&mut self, _name: &str, _: F) -> EncodeResult
+    where F: FnOnce(&mut Encoder<'a>) -> EncodeResult { Err(IoError::last_error()) }
 
-    fn emit_struct(&mut self, _: &str, len: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult {
+    fn emit_enum_variant<F>(&mut self, _: &str, _: uint, _: uint, _: F) -> EncodeResult
+    where F: FnOnce(&mut Encoder<'a>) -> EncodeResult { Err(IoError::last_error()) }
+
+    fn emit_enum_variant_arg<F>(&mut self, _: uint, _: F) -> EncodeResult
+    where F: FnOnce(&mut Encoder<'a>) -> EncodeResult { Err(IoError::last_error()) }
+
+    fn emit_enum_struct_variant<F>(&mut self, name: &str, id: uint, cnt: uint, f: F) -> EncodeResult
+    where F: FnOnce(&mut Encoder<'a>) -> EncodeResult { self.emit_enum_variant(name, id, cnt, f) }
+
+    fn emit_enum_struct_variant_field<F>(&mut self, _: &str, idx: uint, f: F) -> EncodeResult 
+    where F: FnOnce(&mut Encoder<'a>) -> EncodeResult { self.emit_enum_variant_arg(idx, f) }
+
+    fn emit_struct<F>(&mut self, _: &str, len: uint, f: F) -> EncodeResult
+    where F: FnOnce(&mut Encoder<'a>) -> EncodeResult {
         match len {
             0 ... 15 => write_value!(self, FixMap, f, len),
             16 ... 65535 => write_value!(self, Map16, f, len as u16),
@@ -205,21 +215,35 @@ impl<'a> serialize::Encoder<IoError> for Encoder<'a> {
             _ => Err(IoError::last_error())
         }
     }
-    fn emit_struct_field(&mut self, name: &str, _: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult {
+
+    fn emit_struct_field<F>(&mut self, name: &str, _: uint, f: F) -> EncodeResult
+    where F: FnOnce(&mut Encoder<'a>) -> EncodeResult {
         try!(self.emit_str(name));
         f(self)
     }
 
-    fn emit_tuple(&mut self, len: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult { self.emit_seq(len, f) }
-    fn emit_tuple_arg(&mut self, idx: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult { self.emit_seq_elt(idx, f) }
-    fn emit_tuple_struct(&mut self, _: &str, len: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult { self.emit_seq(len, f) }
-    fn emit_tuple_struct_arg(&mut self, idx: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult { self.emit_seq_elt(idx, f) }
+    fn emit_tuple<F>(&mut self, len: uint, f: F) -> EncodeResult
+    where F: FnOnce(&mut Encoder<'a>) -> EncodeResult { self.emit_seq(len, f) }
 
-    fn emit_option(&mut self, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult { f(self) }
+    fn emit_tuple_arg<F>(&mut self, idx: uint, f: F) -> EncodeResult
+    where F: FnOnce(&mut Encoder<'a>) -> EncodeResult { self.emit_seq_elt(idx, f) }
+
+    fn emit_tuple_struct<F>(&mut self, _: &str, len: uint, f: F) -> EncodeResult
+    where F: FnOnce(&mut Encoder<'a>) -> EncodeResult { self.emit_seq(len, f) }
+
+    fn emit_tuple_struct_arg<F>(&mut self, idx: uint, f: F) -> EncodeResult
+    where F: FnOnce(&mut Encoder<'a>) -> EncodeResult { self.emit_seq_elt(idx, f) }
+
+    fn emit_option<F>(&mut self, f: F) -> EncodeResult
+    where F: FnOnce(&mut Encoder<'a>) -> EncodeResult { f(self) }
+
     fn emit_option_none(&mut self) -> EncodeResult { write_value!(self, Nil) }
-    fn emit_option_some(&mut self, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult { f(self) }
 
-    fn emit_seq(&mut self, len: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult {
+    fn emit_option_some<F>(&mut self, f: F) -> EncodeResult
+    where F: FnOnce(&mut Encoder<'a>) -> EncodeResult { f(self) }
+
+    fn emit_seq<F>(&mut self, len: uint, f: F) -> EncodeResult
+    where F: FnOnce(&mut Encoder<'a>) -> EncodeResult {
         match len {
             0 ... 15 => write_value!(self, FixArray, f, len),
             16 ... 65535 => write_value!(self, Array16, f, len as u16),
@@ -227,9 +251,11 @@ impl<'a> serialize::Encoder<IoError> for Encoder<'a> {
             _ => Err(IoError::last_error())
         }
     }
-    fn emit_seq_elt(&mut self, _: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult { f(self) }
+    fn emit_seq_elt<F>(&mut self, _: uint, f: F) -> EncodeResult
+    where F: FnOnce(&mut Encoder<'a>) -> EncodeResult { f(self) }
 
-    fn emit_map(&mut self, len: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult {
+    fn emit_map<F>(&mut self, len: uint, f: F) -> EncodeResult
+    where F: FnOnce(&mut Encoder<'a>) -> EncodeResult {
         match len {
             0 ... 15 => write_value!(self, FixMap, f, len),
             16 ... 65535 => write_value!(self, Map16, f, len as u16),
@@ -237,8 +263,12 @@ impl<'a> serialize::Encoder<IoError> for Encoder<'a> {
             _ => Err(IoError::last_error())
         }
     }
-    fn emit_map_elt_key(&mut self, _: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult { f(self) }
-    fn emit_map_elt_val(&mut self, _: uint, f: |&mut Encoder<'a>| -> EncodeResult) -> EncodeResult { f(self) }
+
+    fn emit_map_elt_key<F>(&mut self, _: uint, mut f: F) -> EncodeResult
+    where F: FnMut(&mut Encoder<'a>) -> EncodeResult { f(self) }
+
+    fn emit_map_elt_val<F>(&mut self, _: uint, f: F) -> EncodeResult
+    where F: FnOnce(&mut Encoder<'a>) -> EncodeResult { f(self) }
 }
 
 pub trait ToMsgPack {

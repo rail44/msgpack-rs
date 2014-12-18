@@ -70,6 +70,8 @@ pub enum DecoderMode {
     Soft
 }
 
+impl Copy for DecoderMode {}
+
 // Decoder
 pub struct Decoder {
     stack: Vec<MsgPack>,

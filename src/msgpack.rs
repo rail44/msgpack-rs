@@ -136,6 +136,8 @@ pub enum IntegerValue {
     Uint64(u64)
 }
 
+impl Copy for IntegerValue {}
+
 impl<E: serialize::Encoder<S>, S> Encodable<E, S> for IntegerValue {
     fn encode(&self, e: &mut E) -> Result<(), S> {
         match *self {
@@ -156,6 +158,8 @@ pub enum FloatValue {
     Float32(f32),
     Float64(f64)
 }
+
+impl Copy for FloatValue {}
 
 impl<E: serialize::Encoder<S>, S> Encodable<E, S> for FloatValue {
     fn encode(&self, e: &mut E) -> Result<(), S> {

@@ -55,7 +55,7 @@ macro_rules! expect(
     ($e:expr, $t:ident, $($t_rest:ident),+) => {
         expect!(Some(*expect!($e, $t)), $($t_rest),+)
     }
-)
+);
 
 #[deriving(Clone, PartialEq, Show)]
 pub enum DecoderError {

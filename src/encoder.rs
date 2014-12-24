@@ -7,7 +7,7 @@ use std::io::{
 use std::mem::{
     transmute,
 };
-use std::collections::TreeMap;
+use std::collections::BTreeMap;
 use std::string::String as RustString;
 use serialize::Encodable;
 use serialize;
@@ -85,7 +85,7 @@ macro_rules! map_type_byte(
     (Array32, $len: expr) => (0xdd);
     (Map16, $len: expr) => (0xde);
     (Map32, $len: expr) => (0xdf);
-)
+);
 
 macro_rules! write_data(
     ($slf: expr, Uint64, $v: expr) => ($slf.writer.write_be_u64($v));
@@ -136,7 +136,7 @@ macro_rules! write_data(
         try!(write_data!($slf, Uint32, $len));
         write_data!($slf, Container, $f)
     });
-)
+);
 
 macro_rules! write_value(
     // for static typos (e.g. Nil, True)
@@ -151,7 +151,7 @@ macro_rules! write_value(
         try!($slf.writer.write_u8(map_type_byte!($t, $len) as u8));
         write_data!($slf, $t, $v, $len)
     });
-)
+);
 
 impl<'a> serialize::Encoder<IoError> for Encoder<'a> {
     fn emit_nil(&mut self) -> EncodeResult { write_value!(self, Nil) }
@@ -283,7 +283,7 @@ macro_rules! to_msgpack_values(
             }
          )+
     )
-)
+);
 
 to_msgpack_values!(self,
     MsgPack { self.clone() }
@@ -304,7 +304,7 @@ to_msgpack_values!(self,
     RustString { String(box self.clone()) }
     () { Nil }
     bool { Boolean(box *self) }
-)
+);
 
 macro_rules! to_msgpack_tuple {
     ($($tyvar:ident),*) => {
@@ -320,26 +320,26 @@ macro_rules! to_msgpack_tuple {
     }
 }
 
-to_msgpack_tuple!(A)
-to_msgpack_tuple!(A, B)
-to_msgpack_tuple!(A, B, C)
-to_msgpack_tuple!(A, B, C, D)
-to_msgpack_tuple!(A, B, C, D, E)
-to_msgpack_tuple!(A, B, C, D, E, F)
-to_msgpack_tuple!(A, B, C, D, E, F, G)
-to_msgpack_tuple!(A, B, C, D, E, F, G, H)
-to_msgpack_tuple!(A, B, C, D, E, F, G, H, I)
-to_msgpack_tuple!(A, B, C, D, E, F, G, H, I, J)
-to_msgpack_tuple!(A, B, C, D, E, F, G, H, I, J, K)
-to_msgpack_tuple!(A, B, C, D, E, F, G, H, I, J, K, L)
+to_msgpack_tuple!(A);
+to_msgpack_tuple!(A, B);
+to_msgpack_tuple!(A, B, C);
+to_msgpack_tuple!(A, B, C, D);
+to_msgpack_tuple!(A, B, C, D, E);
+to_msgpack_tuple!(A, B, C, D, E, F);
+to_msgpack_tuple!(A, B, C, D, E, F, G);
+to_msgpack_tuple!(A, B, C, D, E, F, G, H);
+to_msgpack_tuple!(A, B, C, D, E, F, G, H, I);
+to_msgpack_tuple!(A, B, C, D, E, F, G, H, I, J);
+to_msgpack_tuple!(A, B, C, D, E, F, G, H, I, J, K);
+to_msgpack_tuple!(A, B, C, D, E, F, G, H, I, J, K, L);
 
 impl<T: ToMsgPack> ToMsgPack for Vec<T> {
     fn to_msgpack(&self) -> MsgPack { Array(box self.iter().map(|elt| elt.to_msgpack()).collect()) }
 }
 
-impl<T: ToMsgPack> ToMsgPack for TreeMap<RustString, T> {
+impl<T: ToMsgPack> ToMsgPack for BTreeMap<RustString, T> {
     fn to_msgpack(&self) -> MsgPack {
-        let mut d = TreeMap::new();
+        let mut d = BTreeMap::new();
         for (key, value) in self.iter() {
             d.insert((*key).clone(), value.to_msgpack());
         }
